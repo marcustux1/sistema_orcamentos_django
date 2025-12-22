@@ -1,0 +1,145 @@
+
+<!-- orcamentos/templates/orcamentos/visualizar_orcamento.html -->
+{% extends 'orcamentos/base.html' %}
+
+{% block title %}Orçamento {{ orcamento.numero }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen p-8 pl-20">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <a href="{% url 'orcamentos:listar_orcamentos' %}" 
+               class="text-blue-600 hover:text-blue-700 mb-4 inline-block">
+                <i class="fas fa-arrow-left mr-2"></i> Voltar para lista
+            </a>
+        </div>
+
+        <!-- Mensagens -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} mr-2"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Orçamento -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Header do Orçamento -->
+            <div class="p-6 text-white" style="background-color: {{ orcamento.empresa.cor }};">
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
+                            {{ orcamento.empresa.nome.0 }}
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ orcamento.empresa.nome }}</h2>
+                            <p class="text-white/80">
+                                {% if orcamento.status == 'pedido' %}Pedido{% else %}Orçamento{% endif %} {{ orcamento.numero }}
+                                {% if orcamento.bloqueado %}
+                                <i class="fas fa-lock ml-2" title="Bloqueado"></i>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm opacity-90">Data de Emissão</div>
+                        <div class="text-xl font-bold">{{ orcamento.data_emissao|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados do Cliente -->
+            <div class="p-8 border-b border-slate-200">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Dados do Cliente</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-sm text-slate-600">Nome:</span>
+                        <p class="font-semibold text-slate-800">{{ orcamento.cliente.nome }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-slate-600">CPF/CNPJ:</span>
+                        <p class="font-semibold text-slate-800">{{ orcamento.cliente.cpf_cnpj }}</p>
+                    </div>
+                    {% if orcamento.cliente.telefone %}
+                    <div>
+                        <span class="text-sm text-slate-600">Telefone:</span>
+                        <p class="font-semibold text-slate-800">{{ orcamento.cliente.telefone }}</p>
+                    </div>
+                    {% endif %}
+                    <div class="md:col-span-2">
+                        <span class="text-sm text-slate-600">Endereço:</span>
+                        <p class="font-semibold text-slate-800">{{ orcamento.cliente.endereco }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Itens -->
+            <div class="p-8">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Itens do {% if orcamento.status == 'pedido' %}Pedido{% else %}Orçamento{% endif %}</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">#</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Unidade</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Qtd</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Descrição</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Marca</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Valor Unit.</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in itens %}
+                            <tr class="border-b border-slate-200">
+                                <td class="px-4 py-3 text-slate-600">{{ item.numero_item }}</td>
+                                <td class="px-4 py-3 text-slate-600">{{ item.unidade.sigla }}</td>
+                                <td class="px-4 py-3 text-slate-600">{{ item.quantidade }}</td>
+                                <td class="px-4 py-3 text-slate-800">{{ item.descricao }}</td>
+                                <td class="px-4 py-3 text-slate-600">{{ item.marca|default:"-" }}</td>
+                                <td class="px-4 py-3 text-slate-600">R$ {{ item.valor_unitario|floatformat:2 }}</td>
+                                <td class="px-4 py-3 font-semibold text-slate-800">R$ {{ item.valor_total|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Total -->
+                <div class="flex justify-end mt-6">
+                    <div class="rounded-xl p-6 text-white min-w-72" style="background-color: {{ orcamento.empresa.cor }};">
+                        <div class="text-sm opacity-90 mb-1">Valor Total</div>
+                        <div class="text-4xl font-bold">R$ {{ orcamento.total|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="p-8 bg-slate-50 flex gap-4">
+                {% if not orcamento.bloqueado %}
+                <a href="{% url 'orcamentos:editar_orcamento' orcamento.id %}"
+                   class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center">
+                    <i class="fas fa-edit mr-2"></i> Editar Orçamento
+                </a>
+                <a href="{% url 'orcamentos:gerar_pedido' orcamento.id %}"
+                   onclick="return confirm('Ao gerar o pedido, o orçamento será bloqueado e não poderá mais ser editado. Deseja continuar?')"
+                   class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-center">
+                    <i class="fas fa-lock mr-2"></i> Gerar Pedido
+                </a>
+                {% else %}
+                <div class="flex-1 px-6 py-3 bg-slate-300 text-slate-600 rounded-lg text-center cursor-not-allowed">
+                    <i class="fas fa-lock mr-2"></i> Pedido Gerado - Bloqueado
+                </div>
+                {% endif %}
+                <a href="{% url 'orcamentos:gerar_pdf' orcamento.id %}" target="_blank"
+                   class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center">
+                    <i class="fas fa-file-pdf mr-2"></i> Gerar PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

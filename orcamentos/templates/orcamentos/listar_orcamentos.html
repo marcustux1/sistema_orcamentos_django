@@ -1,0 +1,149 @@
+<!-- orcamentos/templates/orcamentos/listar_orcamentos.html -->
+{% extends 'orcamentos/base.html' %}
+
+{% block title %}Lista de Orçamentos{% endblock %}
+
+{% block content %}
+<div class="min-h-screen p-8 pl-20">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800">Orçamentos</h1>
+                <p class="text-slate-600 mt-1">Gerenciar todos os orçamentos cadastrados</p>
+            </div>
+            <a href="{% url 'orcamentos:selecionar_empresa' %}" 
+               class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i> Novo Orçamento
+            </a>
+        </div>
+
+        <!-- Mensagens -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} mr-2"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Tabela de Orçamentos -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            {% if orcamentos %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Número</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Empresa</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Cliente</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Data</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Status</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Total</th>
+                            <th class="px-6 py-4 text-center text-sm font-semibold text-slate-700">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for orcamento in orcamentos %}
+                        <tr class="border-b border-slate-200 hover:bg-slate-50">
+                            <td class="px-6 py-4">
+                                <span class="font-mono font-semibold text-slate-700">{{ orcamento.numero }}</span>
+                                {% if orcamento.bloqueado %}
+                                <i class="fas fa-lock text-red-500 ml-2" title="Pedido Gerado - Bloqueado"></i>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                                         style="background-color: {{ orcamento.empresa.cor }};">
+                                        {{ orcamento.empresa.nome.0 }}
+                                    </div>
+                                    <span class="text-slate-700">{{ orcamento.empresa.nome }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="font-semibold text-slate-800">{{ orcamento.cliente.nome }}</div>
+                                    <div class="text-sm text-slate-500">{{ orcamento.cliente.cpf_cnpj }}</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                {{ orcamento.data_emissao|date:"d/m/Y" }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if orcamento.status == 'rascunho' %}
+                                    <span class="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold">Rascunho</span>
+                                {% elif orcamento.status == 'enviado' %}
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Enviado</span>
+                                {% elif orcamento.status == 'aprovado' %}
+                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Aprovado</span>
+                                {% elif orcamento.status == 'pedido' %}
+                                    <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">Pedido Gerado</span>
+                                {% elif orcamento.status == 'rejeitado' %}
+                                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Rejeitado</span>
+                                {% else %}
+                                    <span class="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold">{{ orcamento.status|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-lg text-slate-800">
+                                    R$ {{ orcamento.total|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center justify-center gap-2">
+                                    <a href="{% url 'orcamentos:visualizar_orcamento' orcamento.id %}" 
+                                       class="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                       title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if not orcamento.bloqueado %}
+                                    <a href="{% url 'orcamentos:editar_orcamento' orcamento.id %}" 
+                                       class="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'orcamentos:gerar_pdf' orcamento.id %}" 
+                                       class="p-2 text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                                       title="Gerar PDF" target="_blank">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                    
+                                    {% if not orcamento.bloqueado %}
+                                    <form method="POST" action="{% url 'orcamentos:deletar_orcamento' orcamento.id %}" 
+                                          onsubmit="return confirm('Deseja realmente deletar este orçamento?');"
+                                          class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                class="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                title="Deletar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-16">
+                <i class="fas fa-file-invoice text-6xl text-slate-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-slate-600 mb-2">Nenhum orçamento encontrado</h3>
+                <p class="text-slate-500 mb-6">Comece criando seu primeiro orçamento</p>
+                <a href="{% url 'orcamentos:selecionar_empresa' %}" 
+                   class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i> Criar Orçamento
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,466 @@
+<!-- orcamentos/templates/orcamentos/criar_orcamento.html -->
+{% extends 'orcamentos/base.html' %}
+
+{% block title %}{% if editando %}Editar{% else %}Novo{% endif %} Orçamento - {{ empresa.nome }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen p-8 pl-20">
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Header -->
+            <div class="p-6 text-white" style="background-color: {{ empresa.cor }};">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
+                            {{ empresa.nome.0 }}
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ empresa.nome }}</h2>
+                            <p class="text-white/80">{% if editando %}Editar Orçamento {{ orcamento.numero }}{% else %}Novo Orçamento{% endif %}</p>
+                        </div>
+                    </div>
+                    {% if editando %}
+                    <a href="{% url 'orcamentos:visualizar_orcamento' orcamento.id %}" 
+                       class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
+                        <i class="fas fa-times mr-2"></i> Cancelar
+                    </a>
+                    {% else %}
+                    <a href="{% url 'orcamentos:selecionar_empresa' %}" 
+                       class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
+                        Trocar Empresa
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Formulário -->
+            <form method="POST" id="orcamentoForm" class="p-8">
+                {% csrf_token %}
+                <input type="hidden" name="empresa_id" value="{{ empresa.id }}">
+                
+                <!-- Dados do Cliente -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-user"></i>
+                        Dados do Cliente
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                                Nome do Cliente *
+                            </label>
+                            <input type="text" name="cliente_nome" required
+                                   value="{% if editando %}{{ orcamento.cliente.nome }}{% endif %}"
+                                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                                   placeholder="Digite o nome do cliente">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                                CPF/CNPJ *
+                            </label>
+                            <input type="text" name="cliente_cpf_cnpj" required
+                                   value="{% if editando %}{{ orcamento.cliente.cpf_cnpj }}{% endif %}"
+                                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                                   placeholder="000.000.000-00">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                                Telefone
+                            </label>
+                            <input type="text" name="cliente_telefone"
+                                   value="{% if editando %}{{ orcamento.cliente.telefone }}{% endif %}"
+                                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                                   placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                                Endereço *
+                            </label>
+                            <input type="text" name="cliente_endereco" required
+                                   value="{% if editando %}{{ orcamento.cliente.endereco }}{% endif %}"
+                                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                                   placeholder="Rua, número, bairro, cidade">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Itens do Orçamento -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-slate-800">Itens do Orçamento</h3>
+                        <button type="button" onclick="adicionarItem()" 
+                                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus"></i> Adicionar Item
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="tabelaItens">
+                            <thead>
+                                <tr class="bg-slate-100">
+                                    <th class="px-3 py-3 text-left text-sm font-semibold text-slate-700">#</th>
+                                    <th class="px-3 py-3 text-left text-sm font-semibold text-slate-700">Unidade</th>
+                                    <th class="px-3 py-3 text-left text-sm font-semibold text-slate-700">Qtd</th>
+                                    <th class="px-3 py-3 text-left text-sm font-semibold text-slate-700">Descrição</th>
+                                    <th class="px-3 py-3 text-left text-sm font-semibold text-slate-700">Marca</th>
+                                    <th class="px-3 py-3 text-left text-sm font-semibold text-slate-700">Valor Unit.</th>
+                                    <th class="px-3 py-3 text-left text-sm font-semibold text-slate-700">Valor Total</th>
+                                    <th class="px-3 py-3 text-center text-sm font-semibold text-slate-700">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpoTabela">
+                                <!-- Itens serão adicionados aqui via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="flex justify-end mb-6">
+                    <div class="rounded-xl p-6 text-white min-w-72" style="background-color: {{ empresa.cor }};">
+                        <div class="text-sm opacity-90 mb-1">Valor Total do Orçamento</div>
+                        <div class="text-4xl font-bold" id="valorTotal">R$ 0,00</div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="flex gap-4">
+                    <button type="submit" 
+                            class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                        <i class="fas fa-save mr-2"></i> {% if editando %}Atualizar{% else %}Salvar{% endif %} Orçamento
+                    </button>
+                    <button type="button" onclick="limparFormulario()"
+                            class="px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-semibold">
+                        <i class="fas fa-eraser mr-2"></i> Limpar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let contadorItens = 0;
+
+// Dados das unidades (sempre disponível)
+const unidadesData = [
+    {% for unidade in unidades %}
+    { id: {{ unidade.id }}, sigla: "{{ unidade.sigla|escapejs }}" }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+{% if editando and itens %}
+// MODO EDIÇÃO - Carregar itens existentes
+window.addEventListener('DOMContentLoaded', function() {
+    console.log('Carregando itens existentes...');
+    
+    {% for item in itens %}
+    adicionarItemComDados(
+        {{ item.numero_item }},
+        {{ item.unidade.id }},
+        "{{ item.quantidade }}",
+        "{{ item.descricao|escapejs }}",
+        "{{ item.marca|default:""|escapejs }}",
+        "{{ item.valor_unitario }}"
+    );
+    {% endfor %}
+    
+    calcularTotal();
+    console.log('Itens carregados!');
+});
+
+function adicionarItemComDados(numero, unidadeId, quantidade, descricao, marca, valorUnitario) {
+    contadorItens++;
+    const tbody = document.getElementById('corpoTabela');
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-200 hover:bg-slate-50';
+    tr.id = 'item-' + contadorItens;
+    
+    // Criar célula número
+    const tdNumero = document.createElement('td');
+    tdNumero.className = 'px-3 py-3 text-slate-600 font-medium';
+    tdNumero.textContent = numero;
+    
+    // Criar célula unidade
+    const tdUnidade = document.createElement('td');
+    tdUnidade.className = 'px-3 py-3';
+    const selectUnidade = document.createElement('select');
+    selectUnidade.name = 'itens[' + contadorItens + '][unidade]';
+    selectUnidade.required = true;
+    selectUnidade.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    
+    const optionDefault = document.createElement('option');
+    optionDefault.value = '';
+    optionDefault.textContent = 'Selecione';
+    selectUnidade.appendChild(optionDefault);
+    
+    unidadesData.forEach(function(unidade) {
+        const option = document.createElement('option');
+        option.value = unidade.id;
+        option.textContent = unidade.sigla;
+        if (unidade.id == unidadeId) {
+            option.selected = true;
+        }
+        selectUnidade.appendChild(option);
+    });
+    tdUnidade.appendChild(selectUnidade);
+    
+    // Criar célula quantidade
+    const tdQuantidade = document.createElement('td');
+    tdQuantidade.className = 'px-3 py-3';
+    const inputQuantidade = document.createElement('input');
+    inputQuantidade.type = 'number';
+    inputQuantidade.step = '0.01';
+    inputQuantidade.name = 'itens[' + contadorItens + '][quantidade]';
+    inputQuantidade.required = true;
+    inputQuantidade.value = quantidade.replace(',', '.');
+    inputQuantidade.onchange = calcularTotal;
+    inputQuantidade.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputQuantidade.placeholder = '0';
+    tdQuantidade.appendChild(inputQuantidade);
+    
+    // Criar célula descrição
+    const tdDescricao = document.createElement('td');
+    tdDescricao.className = 'px-3 py-3';
+    const inputDescricao = document.createElement('input');
+    inputDescricao.type = 'text';
+    inputDescricao.name = 'itens[' + contadorItens + '][descricao]';
+    inputDescricao.required = true;
+    inputDescricao.value = descricao;
+    inputDescricao.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputDescricao.placeholder = 'Descrição do item';
+    tdDescricao.appendChild(inputDescricao);
+    
+    // Criar célula marca
+    const tdMarca = document.createElement('td');
+    tdMarca.className = 'px-3 py-3';
+    const inputMarca = document.createElement('input');
+    inputMarca.type = 'text';
+    inputMarca.name = 'itens[' + contadorItens + '][marca]';
+    inputMarca.value = marca;
+    inputMarca.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputMarca.placeholder = 'Marca';
+    tdMarca.appendChild(inputMarca);
+    
+    // Criar célula valor unitário
+    const tdValorUnit = document.createElement('td');
+    tdValorUnit.className = 'px-3 py-3';
+    const inputValorUnit = document.createElement('input');
+    inputValorUnit.type = 'number';
+    inputValorUnit.step = '0.01';
+    inputValorUnit.name = 'itens[' + contadorItens + '][valor_unitario]';
+    inputValorUnit.required = true;
+    inputValorUnit.value = valorUnitario.replace(',', '.');
+    inputValorUnit.onchange = calcularTotal;
+    inputValorUnit.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputValorUnit.placeholder = '0,00';
+    tdValorUnit.appendChild(inputValorUnit);
+    
+    // Criar célula valor total
+    const tdValorTotal = document.createElement('td');
+    tdValorTotal.className = 'px-3 py-3 font-semibold text-slate-700';
+    tdValorTotal.id = 'total-' + contadorItens;
+    tdValorTotal.textContent = 'R$ 0,00';
+    
+    // Criar célula ações
+    const tdAcoes = document.createElement('td');
+    tdAcoes.className = 'px-3 py-3 text-center';
+    const btnRemover = document.createElement('button');
+    btnRemover.type = 'button';
+    btnRemover.onclick = function() { removerItem(contadorItens); };
+    btnRemover.className = 'p-2 text-red-600 hover:bg-red-50 rounded transition-colors';
+    btnRemover.innerHTML = '<i class="fas fa-trash"></i>';
+    tdAcoes.appendChild(btnRemover);
+    
+    // Adicionar todas as células à linha
+    tr.appendChild(tdNumero);
+    tr.appendChild(tdUnidade);
+    tr.appendChild(tdQuantidade);
+    tr.appendChild(tdDescricao);
+    tr.appendChild(tdMarca);
+    tr.appendChild(tdValorUnit);
+    tr.appendChild(tdValorTotal);
+    tr.appendChild(tdAcoes);
+    
+    tbody.appendChild(tr);
+}
+
+{% else %}
+// MODO CRIAÇÃO - Adicionar item vazio
+window.addEventListener('DOMContentLoaded', function() {
+    adicionarItem();
+});
+{% endif %}
+
+function adicionarItem() {
+    contadorItens++;
+    const tbody = document.getElementById('corpoTabela');
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-200 hover:bg-slate-50';
+    tr.id = 'item-' + contadorItens;
+    
+    // Criar célula número
+    const tdNumero = document.createElement('td');
+    tdNumero.className = 'px-3 py-3 text-slate-600 font-medium';
+    tdNumero.textContent = contadorItens;
+    
+    // Criar célula unidade
+    const tdUnidade = document.createElement('td');
+    tdUnidade.className = 'px-3 py-3';
+    const selectUnidade = document.createElement('select');
+    selectUnidade.name = 'itens[' + contadorItens + '][unidade]';
+    selectUnidade.required = true;
+    selectUnidade.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    
+    const optionDefault = document.createElement('option');
+    optionDefault.value = '';
+    optionDefault.textContent = 'Selecione';
+    selectUnidade.appendChild(optionDefault);
+    
+    unidadesData.forEach(function(unidade) {
+        const option = document.createElement('option');
+        option.value = unidade.id;
+        option.textContent = unidade.sigla;
+        selectUnidade.appendChild(option);
+    });
+    tdUnidade.appendChild(selectUnidade);
+    
+    // Criar célula quantidade
+    const tdQuantidade = document.createElement('td');
+    tdQuantidade.className = 'px-3 py-3';
+    const inputQuantidade = document.createElement('input');
+    inputQuantidade.type = 'number';
+    inputQuantidade.step = '0.01';
+    inputQuantidade.name = 'itens[' + contadorItens + '][quantidade]';
+    inputQuantidade.required = true;
+    inputQuantidade.onchange = calcularTotal;
+    inputQuantidade.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputQuantidade.placeholder = '0';
+    tdQuantidade.appendChild(inputQuantidade);
+    
+    // Criar célula descrição
+    const tdDescricao = document.createElement('td');
+    tdDescricao.className = 'px-3 py-3';
+    const inputDescricao = document.createElement('input');
+    inputDescricao.type = 'text';
+    inputDescricao.name = 'itens[' + contadorItens + '][descricao]';
+    inputDescricao.required = true;
+    inputDescricao.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputDescricao.placeholder = 'Descrição do item';
+    tdDescricao.appendChild(inputDescricao);
+    
+    // Criar célula marca
+    const tdMarca = document.createElement('td');
+    tdMarca.className = 'px-3 py-3';
+    const inputMarca = document.createElement('input');
+    inputMarca.type = 'text';
+    inputMarca.name = 'itens[' + contadorItens + '][marca]';
+    inputMarca.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputMarca.placeholder = 'Marca';
+    tdMarca.appendChild(inputMarca);
+    
+    // Criar célula valor unitário
+    const tdValorUnit = document.createElement('td');
+    tdValorUnit.className = 'px-3 py-3';
+    const inputValorUnit = document.createElement('input');
+    inputValorUnit.type = 'number';
+    inputValorUnit.step = '0.01';
+    inputValorUnit.name = 'itens[' + contadorItens + '][valor_unitario]';
+    inputValorUnit.required = true;
+    inputValorUnit.onchange = calcularTotal;
+    inputValorUnit.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
+    inputValorUnit.placeholder = '0,00';
+    tdValorUnit.appendChild(inputValorUnit);
+    
+    // Criar célula valor total
+    const tdValorTotal = document.createElement('td');
+    tdValorTotal.className = 'px-3 py-3 font-semibold text-slate-700';
+    tdValorTotal.id = 'total-' + contadorItens;
+    tdValorTotal.textContent = 'R$ 0,00';
+    
+    // Criar célula ações
+    const tdAcoes = document.createElement('td');
+    tdAcoes.className = 'px-3 py-3 text-center';
+    const btnRemover = document.createElement('button');
+    btnRemover.type = 'button';
+    btnRemover.onclick = function() { removerItem(contadorItens); };
+    btnRemover.className = 'p-2 text-red-600 hover:bg-red-50 rounded transition-colors';
+    btnRemover.innerHTML = '<i class="fas fa-trash"></i>';
+    tdAcoes.appendChild(btnRemover);
+    
+    // Adicionar todas as células à linha
+    tr.appendChild(tdNumero);
+    tr.appendChild(tdUnidade);
+    tr.appendChild(tdQuantidade);
+    tr.appendChild(tdDescricao);
+    tr.appendChild(tdMarca);
+    tr.appendChild(tdValorUnit);
+    tr.appendChild(tdValorTotal);
+    tr.appendChild(tdAcoes);
+    
+    tbody.appendChild(tr);
+    renumerarItens();
+}
+
+function removerItem(id) {
+    const item = document.getElementById('item-' + id);
+    if (item) {
+        item.remove();
+        renumerarItens();
+        calcularTotal();
+    }
+}
+
+function renumerarItens() {
+    const linhas = document.querySelectorAll('#corpoTabela tr');
+    linhas.forEach(function(linha, index) {
+        const numeroCell = linha.querySelector('td:first-child');
+        if (numeroCell) {
+            numeroCell.textContent = index + 1;
+        }
+    });
+}
+
+function calcularTotal() {
+    let total = 0;
+    const linhas = document.querySelectorAll('#corpoTabela tr');
+    
+    linhas.forEach(function(linha) {
+        const qtdInput = linha.querySelector('input[name*="[quantidade]"]');
+        const vlrInput = linha.querySelector('input[name*="[valor_unitario]"]');
+        
+        const quantidade = parseFloat(qtdInput ? qtdInput.value : 0) || 0;
+        const valorUnitario = parseFloat(vlrInput ? vlrInput.value : 0) || 0;
+        const valorItem = quantidade * valorUnitario;
+        
+        const id = linha.id.split('-')[1];
+        const totalCell = document.getElementById('total-' + id);
+        if (totalCell) {
+            totalCell.textContent = formatarMoeda(valorItem);
+        }
+        
+        total += valorItem;
+    });
+    
+    const totalElement = document.getElementById('valorTotal');
+    if (totalElement) {
+        totalElement.textContent = formatarMoeda(total);
+    }
+}
+
+function formatarMoeda(valor) {
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function limparFormulario() {
+    if (confirm('Deseja realmente limpar o formulário?')) {
+        document.getElementById('orcamentoForm').reset();
+        document.getElementById('corpoTabela').innerHTML = '';
+        contadorItens = 0;
+        adicionarItem();
+        calcularTotal();
+    }
+}
+</script>
+{% endblock %}

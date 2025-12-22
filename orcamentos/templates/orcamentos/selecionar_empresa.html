@@ -1,0 +1,43 @@
+<!-- orcamentos/templates/orcamentos/selecionar_empresa.html -->
+{% extends 'orcamentos/base.html' %}
+
+{% block title %}Selecionar Empresa - Sistema de Orçamento{% endblock %}
+
+{% block content %}
+<div class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-slate-800 mb-3">
+                Sistema de Orçamento
+            </h1>
+            <p class="text-slate-600">Selecione a empresa para criar um novo orçamento</p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-6">
+            {% for empresa in empresas %}
+            <a href="{% url 'orcamentos:criar_orcamento' empresa.id %}" 
+               class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 block"
+               style="border-top: 6px solid {{ empresa.cor }};">
+                <div class="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg"
+                     style="background-color: {{ empresa.cor }};">
+                    {{ empresa.nome.0 }}
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 text-center">
+                    {{ empresa.nome }}
+                </h3>
+                <div class="mt-4 text-slate-500 text-sm text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    Clique para selecionar
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="{% url 'orcamentos:listar_orcamentos' %}" 
+               class="inline-block px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fas fa-list mr-2"></i> Ver Orçamentos
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
