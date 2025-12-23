@@ -1,15 +1,16 @@
+# orcamentos/models.py
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 
 class Empresa(models.Model):
     nome = models.CharField(max_length=100)
-    cnpj = models.CharField(max_length=18, verbose_name='CNPJ', null=True, blank=True)
-    endereco = models.TextField(verbose_name='Endereço',blank=True, null=True)
-    telefone = models.CharField(max_length=20,blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    logo = models.ImageField(upload_to='logos/', verbose_name='Logo da Empresa', blank=True, null=True)
-    cor = models.CharField(max_length=7, default='#2563eb',blank=True, null=True)  # Cor em hexadecimal
+    cnpj = models.CharField(max_length=18, verbose_name='CNPJ')
+    endereco = models.TextField(verbose_name='Endereço')
+    telefone = models.CharField(max_length=20)
+    email = models.EmailField()
+    logo = models.ImageField(upload_to='logos/', blank=True, null=True, verbose_name='Logo da Empresa')
+    cor = models.CharField(max_length=7, default='#2563eb')  # Cor em hexadecimal
     ativa = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     
@@ -39,7 +40,7 @@ class UnidadeMedida(models.Model):
 
 class Cliente(models.Model):
     nome = models.CharField(max_length=200)
-    cpf_cnpj = models.CharField(max_length=18, unique=True)
+    cpf_cnpj = models.CharField(max_length=18)  # Removido unique=True
     endereco = models.TextField()
     telefone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)

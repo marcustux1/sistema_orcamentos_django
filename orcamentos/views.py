@@ -28,26 +28,20 @@ def criar_orcamento(request, empresa_id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                # Criar ou obter cliente
+                # CORRIGIDO: SEMPRE criar um NOVO cliente para cada orçamento
+                # Isso evita que alterações em um orçamento afetem outros
                 cliente_nome = request.POST.get('cliente_nome')
                 cliente_cpf_cnpj = request.POST.get('cliente_cpf_cnpj')
                 cliente_endereco = request.POST.get('cliente_endereco')
                 cliente_telefone = request.POST.get('cliente_telefone', '')
                 
-                cliente, created = Cliente.objects.get_or_create(
+                # Criar NOVO cliente (não reutilizar)
+                cliente = Cliente.objects.create(
+                    nome=cliente_nome,
                     cpf_cnpj=cliente_cpf_cnpj,
-                    defaults={
-                        'nome': cliente_nome,
-                        'endereco': cliente_endereco,
-                        'telefone': cliente_telefone,
-                    }
+                    endereco=cliente_endereco,
+                    telefone=cliente_telefone
                 )
-                
-                if not created:
-                    cliente.nome = cliente_nome
-                    cliente.endereco = cliente_endereco
-                    cliente.telefone = cliente_telefone
-                    cliente.save()
                 
                 # Criar orçamento
                 orcamento = Orcamento.objects.create(
@@ -108,7 +102,8 @@ def editar_orcamento(request, orcamento_id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                # Atualizar cliente
+                # CORRIGIDO: Atualizar APENAS o cliente deste orçamento
+                # Não afeta outros orçamentos
                 orcamento.cliente.nome = request.POST.get('cliente_nome')
                 orcamento.cliente.cpf_cnpj = request.POST.get('cliente_cpf_cnpj')
                 orcamento.cliente.endereco = request.POST.get('cliente_endereco')
@@ -203,6 +198,7 @@ def deletar_orcamento(request, orcamento_id):
     
     if request.method == 'POST':
         numero = orcamento.numero
+        # Deletar o cliente junto (CASCADE)
         orcamento.delete()
         messages.success(request, f'Orçamento {numero} deletado com sucesso!')
         return redirect('orcamentos:listar_orcamentos')
@@ -240,58 +236,39 @@ def gerar_pdf(request, orcamento_id):
         spaceAfter=2,
     )
     
-    # ============================================
-    # LOGO DA EMPRESA (SE EXISTIR)
-    # ============================================
+    # Logo da empresa (se existir)
     if orcamento.empresa.logo:
         try:
             from PIL import Image as PILImage
             
-            # Caminho completo da logo
             logo_path = orcamento.empresa.logo.path
             
-            # Verificar se o arquivo existe
             if os.path.exists(logo_path):
-                # Abrir imagem para verificar dimensões
                 pil_img = PILImage.open(logo_path)
                 img_width, img_height = pil_img.size
                 
-                # Calcular proporção para manter aspect ratio
-                # Tamanho máximo da logo no PDF
-                max_width = 40 * mm   # 80 milímetros de largura
-                max_height = 20 * mm  # 40 milímetros de altura
+                max_width = 40 * mm
+                max_height = 20 * mm
                 
-                # Calcular a proporção para manter o aspecto original
                 ratio = min(max_width / img_width, max_height / img_height)
                 new_width = img_width * ratio
                 new_height = img_height * ratio
                 
-                # Adicionar logo ao PDF
                 logo = Image(logo_path, width=new_width, height=new_height)
                 logo.hAlign = 'CENTER'
                 elements.append(logo)
-                #elements.append(Spacer(1, 5*mm))
-        except ImportError:
-            # Se PIL não estiver instalado, apenas continuar sem a logo
-            print("Aviso: Pillow não está instalado. A logo não será incluída no PDF.")
-            print("Execute: pip install pillow")
         except Exception as e:
-            # Se houver qualquer erro ao carregar a logo, apenas continuar sem ela
             print(f"Erro ao carregar logo: {e}")
     
-    # ============================================
-    # CABEÇALHO COM DADOS DA EMPRESA
-    # ============================================
+    # Cabeçalho com dados da empresa
     elements.append(Paragraph(f"<b>{orcamento.empresa.nome}</b>", titulo_style))
     elements.append(Paragraph(f"CNPJ: {orcamento.empresa.cnpj}", subtitulo_style))
     elements.append(Paragraph(f"{orcamento.empresa.endereco}", subtitulo_style))
     elements.append(Paragraph(f"Tel: {orcamento.empresa.telefone} | Email: {orcamento.empresa.email}", subtitulo_style))
-   # elements.append(Spacer(1,0*mm))
     
     # Título do documento
     tipo_doc = "PEDIDO" if orcamento.status == 'pedido' else "ORÇAMENTO"
     elements.append(Paragraph(f"<b>{tipo_doc} Nº {orcamento.numero}</b>", titulo_style))
-   # elements.append(Spacer(1,0*mm))
     
     # Informações do cliente
     cliente_info = [
@@ -325,7 +302,6 @@ def gerar_pdf(request, orcamento_id):
         ('FONTSIZE', (0, 0), (-1, -1), 9),
     ]))
     elements.append(proposta_table)
-    #elements.append(Spacer(1, 8*mm))
     
     # Tabela de itens
     data = [['#', 'Und', 'Qtd', 'Descrição', 'Marca', 'Valor Unit.', 'Total']]
@@ -360,7 +336,6 @@ def gerar_pdf(request, orcamento_id):
         ('FONTNAME', (5, -1), (-1, -1), 'Helvetica-Bold'),
     ]))
     elements.append(table)
-    #elements.append(Spacer(1, 10*mm))
     
     # Texto de concordância
     texto_concordancia = """
@@ -368,12 +343,11 @@ def gerar_pdf(request, orcamento_id):
     e específicas, indicadas neste formulário com as quais concordo.
     """
     elements.append(Paragraph(texto_concordancia, styles['Normal']))
-   # elements.append(Spacer(1, 5*mm))
     
     # Empresa e CNPJ
     elements.append(Paragraph(f"<b>{orcamento.empresa.nome}</b> - CNPJ: {orcamento.empresa.cnpj}", 
                              ParagraphStyle('Center', parent=styles['Normal'], alignment=TA_CENTER)))
-    elements.append(Spacer(1, 15*mm))
+    #elements.append(Spacer(1, 15*mm))
     
     # Linha de assinatura
     linha_assinatura = Table([['_' * 60]], colWidths=[150*mm])
