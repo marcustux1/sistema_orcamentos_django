@@ -1,0 +1,44 @@
+<h2>Pedido - {{ pedido.orgao }}</h2>
+
+<p>
+  Pregão: {{ pedido.numero_pregao }} |
+  Empenho: {{ pedido.numero_empenho }} |
+  Data: {{ pedido.data_pedido }}
+</p>
+
+<hr>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Adicionar Item</button>
+</form>
+
+<hr>
+
+<h3>Itens do Pedido</h3>
+
+<table border="1" cellpadding="5">
+  <tr>
+    <th>Item</th>
+    <th>Descrição</th>
+    <th>Und</th>
+    <th>Qtd</th>
+    <th>Marca</th>
+    <th>V. Unit.</th>
+    <th>V. Total</th>
+  </tr>
+  {% for item in itens %}
+  <tr>
+    <td>{{ item.numero_item }}</td>
+    <td>{{ item.descricao }}</td>
+    <td>{{ item.unidade }}</td>
+    <td>{{ item.quantidade }}</td>
+    <td>{{ item.marca }}</td>
+    <td>{{ item.valor_unitario }}</td>
+    <td>{{ item.valor_total }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p><strong>Total do pedido:</strong> R$ {{ pedido.total }}</p>

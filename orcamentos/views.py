@@ -305,13 +305,22 @@ def gerar_pdf(request, orcamento_id):
     
     # Tabela de itens
     data = [['#', 'Und', 'Qtd', 'Descrição', 'Marca', 'Valor Unit.', 'Total']]
-    
+
+    descricao_style = ParagraphStyle(
+        'Descricao',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+        alignment=TA_LEFT,
+    )
+
+        
     for item in itens:
         data.append([
             str(item.numero_item),
             item.unidade.sigla,
             str(item.quantidade),
-            item.descricao[:50],
+            Paragraph(item.descricao, descricao_style),  # ✅ quebra automática
             item.marca or '-',
             f'R$ {item.valor_unitario:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.'),
             f'R$ {item.valor_total:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.'),
@@ -350,6 +359,7 @@ def gerar_pdf(request, orcamento_id):
     #elements.append(Spacer(1, 15*mm))
     
     # Linha de assinatura
+    elements.append(Spacer(1, 25*mm))  # aumenta o espaço vertical
     linha_assinatura = Table([['_' * 60]], colWidths=[150*mm])
     linha_assinatura.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
