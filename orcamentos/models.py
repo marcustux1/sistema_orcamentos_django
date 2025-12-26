@@ -54,7 +54,13 @@ class Cliente(models.Model):
     
     def __str__(self):
         return f"{self.nome} - {self.cpf_cnpj}"
-
+    
+    def save(self, *args, **kwargs):
+        if self.nome:
+            self.nome = self.nome.upper()
+        if self.endereco:
+            self.endereco = self.endereco.upper()
+        super().save(*args, **kwargs)
 
 class Orcamento(models.Model):
     STATUS_CHOICES = [
@@ -90,6 +96,11 @@ class Orcamento(models.Model):
         return f"Orçamento {self.numero} - {self.cliente.nome}"
     
     def save(self, *args, **kwargs):
+
+        if self.prazo_entrega:
+            self.prazo_entrega = self.prazo_entrega.upper()
+        if self.observacoes:
+            self.observacoes = self.observacoes.upper()
         if not self.numero:
             # Gerar número único do orçamento
             ultimo = Orcamento.objects.filter(empresa=self.empresa).order_by('-id').first()
@@ -99,6 +110,8 @@ class Orcamento(models.Model):
             else:
                 novo_num = 1
             self.numero = f"ORC-{self.empresa.id}-{novo_num:05d}"
+
+
         super().save(*args, **kwargs)
     
     def calcular_total(self):
@@ -140,8 +153,14 @@ class ItemOrcamento(models.Model):
     
     def save(self, *args, **kwargs):
         # Calcular valor total automaticamente
+
+        if self.descricao:
+            self.descricao = self.descricao.upper()
+        if self.marca:
+            self.marca = self.marca.upper()
+
         self.valor_total = self.quantidade * self.valor_unitario
-        
+
         # Atribuir número do item automaticamente se não existir
         if not self.numero_item:
             ultimo_item = ItemOrcamento.objects.filter(orcamento=self.orcamento).order_by('-numero_item').first()

@@ -52,7 +52,8 @@
                             <input type="text" name="cliente_nome" required
                                    value="{% if editando %}{{ orcamento.cliente.nome }}{% endif %}"
                                    class="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
-                                   placeholder="Digite o nome do cliente">
+                                   placeholder="Digite o nome do cliente"
+                                   style="text-transform: uppercase;">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">
@@ -79,7 +80,8 @@
                             <input type="text" name="cliente_endereco" required
                                    value="{% if editando %}{{ orcamento.cliente.endereco }}{% endif %}"
                                    class="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
-                                   placeholder="Rua, número, bairro, cidade">
+                                   placeholder="Rua, número, bairro, cidade"
+                                   style="text-transform: uppercase;">
                         </div>
                     </div>
                 </div>
@@ -227,7 +229,12 @@ function adicionarItemComDados(numero, unidadeId, quantidade, descricao, marca, 
     inputDescricao.type = 'text';
     inputDescricao.name = 'itens[' + contadorItens + '][descricao]';
     inputDescricao.required = true;
+    inputDescricao.oninput = "this.value = this.value.toUpperCase()";
     inputDescricao.value = descricao;
+    inputDescricao.addEventListener('input', function () {
+    this.value = this.value.toUpperCase();
+                    });
+
     inputDescricao.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
     inputDescricao.placeholder = 'Descrição do item';
     tdDescricao.appendChild(inputDescricao);
@@ -239,6 +246,7 @@ function adicionarItemComDados(numero, unidadeId, quantidade, descricao, marca, 
     inputMarca.type = 'text';
     inputMarca.name = 'itens[' + contadorItens + '][marca]';
     inputMarca.value = marca;
+    inputMarca.oninput = "this.value = this.value.toUpperCase()";
     inputMarca.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
     inputMarca.placeholder = 'Marca';
     tdMarca.appendChild(inputMarca);
@@ -346,6 +354,10 @@ function adicionarItem() {
     inputDescricao.type = 'text';
     inputDescricao.name = 'itens[' + contadorItens + '][descricao]';
     inputDescricao.required = true;
+    inputDescricao.addEventListener('input', function () {
+    this.value = this.value.toUpperCase();
+        });
+
     inputDescricao.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
     inputDescricao.placeholder = 'Descrição do item';
     tdDescricao.appendChild(inputDescricao);
@@ -355,6 +367,9 @@ function adicionarItem() {
     tdMarca.className = 'px-3 py-3';
     const inputMarca = document.createElement('input');
     inputMarca.type = 'text';
+    inputMarca.addEventListener('input', function () {
+    this.value = this.value.toUpperCase();
+        });
     inputMarca.name = 'itens[' + contadorItens + '][marca]';
     inputMarca.className = 'w-full px-2 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none text-sm';
     inputMarca.placeholder = 'Marca';
